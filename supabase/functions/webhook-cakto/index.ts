@@ -6,7 +6,17 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+// Chave de servidor: projetos novos do Supabase usam SUPABASE_SECRET_KEYS; os antigos, SUPABASE_SERVICE_ROLE_KEY
+function chaveServidor(): string {
+  const antiga = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (antiga) return antiga;
+  try {
+    const novas = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}");
+    return novas.default ?? Object.values(novas)[0] as string;
+  } catch { return ""; }
+}
+
+const admin = createClient(Deno.env.get("SUPABASE_URL")!, chaveServidor());
 
 // O que cada oferta da Cakto libera. Troque as chaves pelos IDs reais das ofertas.
 const OFERTAS: Record<string, { plano?: "funil_pronto" | "pro" | "max"; creditos: number; avulso: boolean }> = {

@@ -11,6 +11,16 @@
 import Anthropic from "npm:@anthropic-ai/sdk";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+// Chave de servidor: projetos novos do Supabase usam SUPABASE_SECRET_KEYS; os antigos, SUPABASE_SERVICE_ROLE_KEY
+function chaveServidor(): string {
+  const antiga = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (antiga) return antiga;
+  try {
+    const novas = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}");
+    return novas.default ?? Object.values(novas)[0] as string;
+  } catch { return ""; }
+}
+
 const MODELO = "claude-opus-5-5";
 const CREDITOS_FUNIL = 10;
 const LIMITE_ETAPAS_POR_HORA = 30; // anti-abuso
@@ -29,7 +39,7 @@ const NOMES_ETAPAS: Record<number, string> = {
 };
 
 const anthropic = new Anthropic({ apiKey: Deno.env.get("ANTHROPIC_API_KEY")! });
-const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+const admin = createClient(Deno.env.get("SUPABASE_URL")!, chaveServidor());
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
